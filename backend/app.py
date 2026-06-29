@@ -1,27 +1,31 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-from google import genai
-
+import google.generativeai as genai
 import PyPDF2
 import io
 import os
 import json
 
-# Load .env
+# Load environment variables
 load_dotenv()
+
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Create model
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Flask App
 app = Flask(__name__)
 CORS(app)
 
-# Gemini Client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
 
 @app.route("/")
 def home():
-    return "AI Resume Analyzer Backend is Running!"
+    return jsonify({
+        "status": "Backend Running Successfully"
+    })
 
 
 @app.route("/analyze", methods=["POST"])
@@ -36,6 +40,7 @@ def analyze_resume():
         return jsonify({"error": "No selected file"}), 400
 
     try:
+
         # Read PDF
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.read()))
 
@@ -48,9 +53,9 @@ def analyze_resume():
                 extracted_text += text + "\n"
 
         if extracted_text.strip() == "":
-            return jsonify({"error": "No text found inside PDF"}), 400
+            return jsonify({"error": "No text found in PDF"}), 400
 
-        # Gemini Prompt
+        # Prompt
         prompt = f"""
 You are an expert ATS Resume Analyzer.
 
@@ -61,30 +66,30 @@ Return ONLY valid JSON.
 Example:
 
 {{
-  "ats_score": 86,
-  "skills_found": 18,
-  "experience": "2+ Years",
-  "education": "B.E / CSE",
-  "rating": "Excellent",
-  "strengths": [
-    "Good technical skills",
-    "Relevant projects",
-    "Strong resume structure"
-  ],
-  "weaknesses": [
-    "No internship experience",
-    "Weak summary"
-  ],
-  "missing_skills": [
-    "Docker",
-    "AWS",
-    "CI/CD"
-  ],
-  "suggestions": [
-    "Add GitHub",
-    "Improve Projects",
-    "Add Certifications"
-  ]
+    "ats_score": 86,
+    "skills_found": 18,
+    "experience": "2+ Years",
+    "education": "B.E / CSE",
+    "rating": "Excellent",
+    "strengths": [
+        "Good technical skills",
+        "Relevant projects",
+        "Strong resume structure"
+    ],
+    "weaknesses": [
+        "No internship experience",
+        "Weak summary"
+    ],
+    "missing_skills": [
+        "Docker",
+        "AWS",
+        "CI/CD"
+    ],
+    "suggestions": [
+        "Add GitHub",
+        "Improve Projects",
+        "Add Certifications"
+    ]
 }}
 
 Resume:
@@ -92,19 +97,17 @@ Resume:
 {extracted_text}
 """
 
-        # Gemini Response
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+        # Generate response
+        response = model.generate_content(prompt)
 
         text = response.text.strip()
 
-        # Remove markdown if Gemini returns it
+        # Remove markdown
         text = text.replace("```json", "")
         text = text.replace("```", "")
         text = text.strip()
 
+        # Convert JSON string to dictionary
         analysis = json.loads(text)
 
         return jsonify({
@@ -120,4 +123,4 @@ Resume:
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
