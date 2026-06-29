@@ -7,115 +7,93 @@ import io
 import os
 import json
 
-# Load environment variables
+# Load .env
 load_dotenv()
 
-# Configure Gemini
+# Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Create Gemini model
 model = genai.GenerativeModel("gemini-2.5-flash")
-
-# Flask App
-from flask_cors import CORS
 
 app = Flask(__name__)
 
-CORS(
-    app,
-    origins="*",
-    methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"]
-)
+# Enable CORS
+CORS(app)
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
     return jsonify({
         "status": "Backend Running Successfully"
     })
 
-
-@app.route("/analyze", methods=["POST", "OPTIONS"])
+@app.route("/analyze", methods=["POST"])
 def analyze_resume():
 
-    # Handle preflight request
-    if request.method == "OPTIONS":
-        return jsonify({"success": True}), 200
-
     if "resume" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+        return jsonify({"success": False, "error": "No file uploaded"}), 400
 
     file = request.files["resume"]
 
     if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
+        return jsonify({"success": False, "error": "No file selected"}), 400
 
     try:
 
-        # Read PDF
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.read()))
 
-        extracted_text = ""
+        resume_text = ""
 
         for page in pdf_reader.pages:
             text = page.extract_text()
-
             if text:
-                extracted_text += text + "\n"
+                resume_text += text + "\n"
 
-        if extracted_text.strip() == "":
-            return jsonify({"error": "No text found in PDF"}), 400
+        if resume_text.strip() == "":
+            return jsonify({"success": False, "error": "PDF contains no text"}), 400
 
         prompt = f"""
 You are an expert ATS Resume Analyzer.
 
-Analyze the following resume.
+Analyze this resume.
 
-Return ONLY valid JSON.
-
-Example:
+Return ONLY JSON.
 
 {{
-    "ats_score": 86,
-    "skills_found": 18,
-    "experience": "2+ Years",
-    "education": "B.E / CSE",
-    "rating": "Excellent",
-    "strengths": [
-        "Good technical skills",
-        "Relevant projects",
-        "Strong resume structure"
+    "ats_score": 90,
+    "skills_found": 15,
+    "experience":"2 Years",
+    "education":"B.E CSE",
+    "rating":"Excellent",
+    "strengths":[
+        "Strong projects",
+        "Good formatting"
     ],
-    "weaknesses": [
-        "No internship experience",
-        "Weak summary"
+    "weaknesses":[
+        "Missing certifications"
     ],
-    "missing_skills": [
+    "missing_skills":[
         "Docker",
-        "AWS",
-        "CI/CD"
+        "AWS"
     ],
-    "suggestions": [
+    "suggestions":[
         "Add GitHub",
-        "Improve Projects",
-        "Add Certifications"
+        "Add Internship"
     ]
 }}
 
 Resume:
 
-{extracted_text}
+{resume_text}
 """
 
         response = model.generate_content(prompt)
 
-        text = response.text.strip()
+        result = response.text
 
-        text = text.replace("```json", "")
-        text = text.replace("```", "")
-        text = text.strip()
+        result = result.replace("```json", "")
+        result = result.replace("```", "")
+        result = result.strip()
 
-        analysis = json.loads(text)
+        analysis = json.loads(result)
 
         return jsonify({
             "success": True,
@@ -130,4 +108,4 @@ Resume:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
