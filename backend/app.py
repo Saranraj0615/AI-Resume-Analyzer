@@ -22,11 +22,14 @@ app = Flask(__name__)
 # Enable CORS
 CORS(
     app,
-    resources={r"/*": {"origins": "*"}},
-    supports_credentials=True
+    resources={
+        r"/*": {
+            "origins": [
+                "https://ai-resume-analyzer-eta-eight.vercel.app"
+            ]
+        }
+    }
 )
-
-
 @app.after_request
 def after_request(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
