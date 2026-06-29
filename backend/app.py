@@ -17,26 +17,16 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Flask App
+from flask_cors import CORS
+
 app = Flask(__name__)
 
-# Enable CORS
 CORS(
     app,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://ai-resume-analyzer-eta-eight.vercel.app"
-            ]
-        }
-    }
+    origins="*",
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
 )
-@app.after_request
-def after_request(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-    return response
-
 
 @app.route("/", methods=["GET"])
 def home():
