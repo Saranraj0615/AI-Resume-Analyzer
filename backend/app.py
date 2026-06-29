@@ -13,23 +13,41 @@ load_dotenv()
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Create model
+# Create Gemini model
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Flask App
 app = Flask(__name__)
-CORS(app)
+
+# Enable CORS
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=True
+)
 
 
-@app.route("/")
+@app.after_request
+def after_request(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
+
+@app.route("/", methods=["GET"])
 def home():
     return jsonify({
         "status": "Backend Running Successfully"
     })
 
 
-@app.route("/analyze", methods=["POST"])
+@app.route("/analyze", methods=["POST", "OPTIONS"])
 def analyze_resume():
+
+    # Handle preflight request
+    if request.method == "OPTIONS":
+        return jsonify({"success": True}), 200
 
     if "resume" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -55,7 +73,6 @@ def analyze_resume():
         if extracted_text.strip() == "":
             return jsonify({"error": "No text found in PDF"}), 400
 
-        # Prompt
         prompt = f"""
 You are an expert ATS Resume Analyzer.
 
@@ -97,17 +114,14 @@ Resume:
 {extracted_text}
 """
 
-        # Generate response
         response = model.generate_content(prompt)
 
         text = response.text.strip()
 
-        # Remove markdown
         text = text.replace("```json", "")
         text = text.replace("```", "")
         text = text.strip()
 
-        # Convert JSON string to dictionary
         analysis = json.loads(text)
 
         return jsonify({
