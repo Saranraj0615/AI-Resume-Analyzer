@@ -1,0 +1,21 @@
+import os
+import fitz  # PyMuPDF
+
+def extract_text(file_path):
+    """
+    Extract text from PDF resume
+    """
+    text = ""
+
+    try:
+        doc = fitz.open(file_path)
+
+        for page in doc:
+            text += page.get_text()
+
+        doc.close()
+
+    except Exception as e:
+        print("Error reading PDF:", e)
+
+    return text

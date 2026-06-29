@@ -1,0 +1,106 @@
+.navbar{
+    width:90%;
+    position:absolute;
+    top:25px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    color:white;
+}
+
+.logo{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.nav-links{
+    display:flex;
+    gap:40px;
+    list-style:none;
+}
+
+.nav-links li{
+    cursor:pointer;
+}
+
+.start-btn{
+    position: relative;
+    overflow: hidden;
+
+    padding: 14px 34px;
+    border: none;
+    border-radius: 50px;
+
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+
+    cursor: pointer;
+
+    background: linear-gradient(135deg,#00D2FF,#6A5CFF,#FF66C4);
+    background-size: 300% 300%;
+
+    animation: gradientMove 5s ease infinite,
+               glowPulse 2s ease-in-out infinite;
+
+    box-shadow:
+        0 0 20px rgba(0,210,255,.5),
+        0 0 45px rgba(106,92,255,.4);
+
+    transition: .35s;
+}
+
+.s.start-btn{
+    padding:14px 34px;
+    border-radius:40px;
+    border:1px solid rgba(255,255,255,.15);
+
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+
+    color:white;
+    font-size:16px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.35s ease;
+
+    box-shadow:
+    0 0 20px rgba(0,180,255,.25),
+    inset 0 0 12px rgba(255,255,255,.08);
+
+    animation:pulseGlow 2.8s infinite;
+}
+
+.start-btn:hover{
+
+    transform:translateY(-3px);
+
+    background:rgba(80,170,255,.22);
+
+    box-shadow:
+    0 0 25px rgba(0,200,255,.55),
+    0 0 60px rgba(0,120,255,.35);
+
+}
+ @keyframes pulseGlow{
+
+0%{
+box-shadow:
+0 0 18px rgba(0,180,255,.25);
+}
+
+50%{
+box-shadow:
+0 0 35px rgba(0,220,255,.55),
+0 0 70px rgba(70,120,255,.35);
+}
+
+100%{
+box-shadow:
+0 0 18px rgba(0,180,255,.25);
+}
+}
